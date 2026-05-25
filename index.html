@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0" />
+    <title>Article Booking Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f7f9fc 0%, #eef3ff 100%);
+            min-height: 100vh;
+        }
+
+        .page-wrap {
+            max-width: 1400px;
+        }
+
+        .card {
+            border: 0;
+            border-radius: 1rem;
+            box-shadow: 0 8px 30px rgba(15, 45, 100, 0.1);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .table thead th {
+            white-space: nowrap;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .table tbody td {
+            white-space: nowrap;
+            font-size: 0.85rem;
+        }
+
+        .important-header {
+            color: #dc3545 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-4 py-md-5 page-wrap">
+        <div class="card mb-4">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h3 mb-1">Article Booking</h1>
+                <p class="text-secondary mb-4">Fill receiver details. Remaining fields are auto-filled and saved.</p>
+
+                <form id="articleForm"
+                    class="row g-3"
+                    novalidate>
+                    <div class="col-md-6">
+                        <label for="receiverName"
+                            class="form-label">Receiver Name</label>
+                        <input type="text"
+                            class="form-control"
+                            id="receiverName"
+                            required />
+                        <div class="invalid-feedback">Receiver name is required.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="receiverMobileNo"
+                            class="form-label">Receiver Mobile No</label>
+                        <input type="tel"
+                            class="form-control"
+                            id="receiverMobileNo"
+                            pattern="^[0-9]{10}$"
+                            required />
+                        <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="receiverAddLine1"
+                            class="form-label">Receiver Add Line 1</label>
+                        <input type="text"
+                            class="form-control"
+                            id="receiverAddLine1"
+                            required />
+                        <div class="invalid-feedback">Receiver address line 1 is required.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="receiverAddLine2"
+                            class="form-label">Receiver Add Line 2</label>
+                        <input type="text"
+                            class="form-control"
+                            id="receiverAddLine2"
+                            required />
+                        <div class="invalid-feedback">Receiver address line 2 is required.</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="receiverCity"
+                            class="form-label">Receiver City</label>
+                        <input type="text"
+                            class="form-control"
+                            id="receiverCity"
+                            required />
+                        <div class="invalid-feedback">Receiver city is required.</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="receiverState"
+                            class="form-label">Receiver State</label>
+                        <input type="text"
+                            class="form-control"
+                            id="receiverState"
+                            required />
+                        <div class="invalid-feedback">Receiver state is required.</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="receiverPincode"
+                            class="form-label">Receiver Pincode</label>
+                        <input type="text"
+                            class="form-control"
+                            id="receiverPincode"
+                            pattern="^[0-9]{6}$"
+                            required />
+                        <div class="invalid-feedback">Enter a valid 6-digit pincode.</div>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 pt-2">
+                        <button type="submit"
+                            class="btn btn-primary px-4">Save Record</button>
+                        <button type="button"
+                            id="clearStorageBtn"
+                            class="btn btn-outline-danger">Clear All Records</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-4 p-md-5">
+
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <h2 class="h5 mb-0">Saved Records</h2>
+                        <span id="recordCount"
+                            class="badge text-bg-secondary">0</span>
+                    </div>
+                    <button id="exportExcelBtn"
+                        type="button"
+                        class="btn btn-success btn-sm">Export to Excel</button>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="table table-bordered table-hover align-middle"
+                        id="recordsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="important-header">SERIAL NUMBER</th>
+                                <th class="important-header">BARCODE NO</th>
+                                <th class="important-header">PHYSICAL WEIGHT</th>
+                                <th>SHAPE OF ARTICLE</th>
+                                <th class="important-header">LENGTHS</th>
+                                <th>BREADTH/DIAMETER</th>
+                                <th>HEIGHT</th>
+                                <th>PRIORITY FLAG</th>
+                                <th>DELIVERY INSTRUCTION</th>
+                                <th>INSTRUCTION RTS</th>
+                                <th class="important-header">SENDER NAME</th>
+                                <th>SENDER COMPANY</th>
+                                <th class="important-header">SENDER ADD LINE 1</th>
+                                <th class="important-header">SENDER CITY</th>
+                                <th class="important-header">SENDER STATE</th>
+                                <th class="important-header">SENDER PINCODE</th>
+                                <th>SENDER EMAILID</th>
+                                <th>SENDER ALT CONTACT</th>
+                                <th>SENDER KYC</th>
+                                <th>SENDER TAX REFERENCE</th>
+                                <th class="important-header">RECEIVER NAME</th>
+                                <th>RECEIVER COMPANY</th>
+                                <th class="important-header">RECEIVER ADD LINE 1</th>
+                                <th class="important-header">RECEIVER ADD LINE 2</th>
+                                <th class="important-header">RECEIVER CITY</th>
+                                <th class="important-header">RECEIVER STATE</th>
+                                <th class="important-header">RECEIVER PINCODE</th>
+                                <th>RECEIVER EMAILID</th>
+                                <th>RECEIVER ALT CONTACT</th>
+                                <th>RECEIVER KYC</th>
+                                <th>RECEIVER TAX REFERENCE</th>
+                                <th class="important-header">ALT ADDRESS FLAG</th>
+                                <th class="important-header">PICKUP ADDRESS FLAG</th>
+                                <th class="important-header">DROP OFF PINCODE</th>
+                                <th>DROPOFF/PICKUP OFFICE ID</th>
+                                <th class="important-header">SENDER MOBILE NO</th>
+                                <th class="important-header">RECEIVER MOBILE NO</th>
+                                <th>PREPAYMENT CODE</th>
+                                <th>VALUE OF PREPAYMENT</th>
+                                <th>CODR/COD</th>
+                                <th>VALUE FOR CODR/COD</th>
+                                <th>INSURANCE TYPE</th>
+                                <th>VALUE OF INSURANCE</th>
+                                <th class="important-header">ACK</th>
+                                <th>REGISTRATION</th>
+                                <th>OTP BASED DELIVERY</th>
+                                <th>BULK REFERENCE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsBody">
+                            <tr>
+                                <td colspan="46"
+                                    class="text-center text-secondary py-4">No records saved yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            var STORAGE_KEY = "article_booking_records";
+
+            var form = document.getElementById("articleForm");
+            var recordsBody = document.getElementById("recordsBody");
+            var recordCount = document.getElementById("recordCount");
+            var clearStorageBtn = document.getElementById("clearStorageBtn");
+
+            function getRecords() {
+                try {
+                    var raw = localStorage.getItem(STORAGE_KEY);
+                    var parsed = raw ? JSON.parse(raw) : [];
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function saveRecords(records) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            }
+
+            function formatValue(value) {
+                if (typeof value === "boolean") {
+                    return value ? "TRUE" : "FALSE";
+                }
+                return value === "" || value === null || value === undefined ? "" : String(value);
+            }
+
+            function renderTable() {
+                var records = getRecords();
+                recordCount.textContent = String(records.length);
+
+                if (!records.length) {
+                    recordsBody.innerHTML = '<tr><td colspan="46" class="text-center text-secondary py-4">No records saved yet.</td></tr>';
+                    return;
+                }
+
+                var rowsHtml = records
+                    .map(function(record) {
+                        return "<tr>" +
+                            "<td>" + formatValue(record.serialNumber) + "</td>" +
+                            "<td>" + formatValue(record.barcodeNo) + "</td>" +
+                            "<td>" + formatValue(record.physicalWeight) + "</td>" +
+                            "<td>" + formatValue(record.shapeOfArticle) + "</td>" +
+                            "<td>" + formatValue(record.lengths) + "</td>" +
+                            "<td>" + formatValue(record.breadthDiameter) + "</td>" +
+                            "<td>" + formatValue(record.height) + "</td>" +
+                            "<td>" + formatValue(record.priorityFlag) + "</td>" +
+                            "<td>" + formatValue(record.deliveryInstruction) + "</td>" +
+                            "<td>" + formatValue(record.instructionRts) + "</td>" +
+                            "<td>" + formatValue(record.senderName) + "</td>" +
+                            "<td>" + formatValue(record.senderCompany) + "</td>" +
+                            "<td>" + formatValue(record.senderAddLine1) + "</td>" +
+                            "<td>" + formatValue(record.senderAddLine2) + "</td>" +
+                            "<td>" + formatValue(record.senderState) + "</td>" +
+                            "<td>" + formatValue(record.senderPincode) + "</td>" +
+                            "<td>" + formatValue(record.senderEmailId) + "</td>" +
+                            "<td>" + formatValue(record.senderAltContact) + "</td>" +
+                            "<td>" + formatValue(record.senderKyc) + "</td>" +
+                            "<td>" + formatValue(record.senderTaxReference) + "</td>" +
+                            "<td>" + formatValue(record.receiverName) + "</td>" +
+                            "<td>" + formatValue(record.receiverCompany) + "</td>" +
+                            "<td>" + formatValue(record.receiverAddLine1) + "</td>" +
+                            "<td>" + formatValue(record.receiverAddLine2) + "</td>" +
+                            "<td>" + formatValue(record.receiverCity) + "</td>" +
+                            "<td>" + formatValue(record.receiverState) + "</td>" +
+                            "<td>" + formatValue(record.receiverPincode) + "</td>" +
+                            "<td>" + formatValue(record.receiverEmailId) + "</td>" +
+                            "<td>" + formatValue(record.receiverAltContact) + "</td>" +
+                            "<td>" + formatValue(record.receiverKyc) + "</td>" +
+                            "<td>" + formatValue(record.receiverTaxReference) + "</td>" +
+                            "<td>" + formatValue(record.altAddressFlag) + "</td>" +
+                            "<td>" + formatValue(record.pickupAddressFlag) + "</td>" +
+                            "<td>" + formatValue(record.dropOffPincode) + "</td>" +
+                            "<td>" + formatValue(record.dropoffPickupOfficeId) + "</td>" +
+                            "<td>" + formatValue(record.senderMobileNo) + "</td>" +
+                            "<td>" + formatValue(record.receiverMobileNo) + "</td>" +
+                            "<td>" + formatValue(record.prepaymentCode) + "</td>" +
+                            "<td>" + formatValue(record.valueOfPrepayment) + "</td>" +
+                            "<td>" + formatValue(record.codrCod) + "</td>" +
+                            "<td>" + formatValue(record.valueForCodrCod) + "</td>" +
+                            "<td>" + formatValue(record.insuranceType) + "</td>" +
+                            "<td>" + formatValue(record.valueOfInsurance) + "</td>" +
+                            "<td>" + formatValue(record.ack) + "</td>" +
+                            "<td>" + formatValue(record.registration) + "</td>" +
+                            "<td>" + formatValue(record.otpBasedDelivery) + "</td>" +
+                            "<td>" + formatValue(record.bulkReference) + "</td>" +
+                            "</tr>";
+                    })
+                    .join("");
+
+                recordsBody.innerHTML = rowsHtml;
+            }
+
+            function getNextSerialNumber(records) {
+                if (!records.length) {
+                    return 1;
+                }
+
+                var max = records.reduce(function(acc, record) {
+                    var current = Number(record.serialNumber) || 0;
+                    return current > acc ? current : acc;
+                }, 0);
+
+                return max + 1;
+            }
+
+            function generateBarcodeNo(records) {
+                var existing = {};
+                records.forEach(function(record) {
+                    if (record.barcodeNo) {
+                        existing[record.barcodeNo] = true;
+                    }
+                });
+
+                var barcode = "";
+                do {
+                    var randomNum = String(Math.floor(Math.random() * 1000000000)).padStart(9, "0");
+                    barcode = "EZ" + randomNum + "IN";
+                } while (existing[barcode]);
+
+                return barcode;
+            }
+
+            function buildRecord(records) {
+                return {
+                    serialNumber: getNextSerialNumber(records),
+                    barcodeNo: generateBarcodeNo(records),
+                    physicalWeight: 100,
+                    shapeOfArticle: "NROL",
+                    lengths: 15,
+                    breadthDiameter: 9,
+                    height: 4,
+                    priorityFlag: true,
+                    deliveryInstruction: "ND",
+                    instructionRts: "RTS",
+                    senderName: "rohit p. vala",
+                    senderCompany: "",
+                    senderAddLine1: "240 silver business hub",
+                    senderAddLine2: "surat",
+                    senderState: "gujarat",
+                    senderPincode: "395011",
+                    senderEmailId: "",
+                    senderAltContact: "",
+                    senderKyc: "",
+                    senderTaxReference: "",
+                    receiverName: document.getElementById("receiverName").value.trim(),
+                    receiverCompany: "",
+                    receiverAddLine1: document.getElementById("receiverAddLine1").value.trim(),
+                    receiverAddLine2: document.getElementById("receiverAddLine2").value.trim(),
+                    receiverCity: document.getElementById("receiverCity").value.trim(),
+                    receiverState: document.getElementById("receiverState").value.trim(),
+                    receiverPincode: document.getElementById("receiverPincode").value.trim(),
+                    receiverEmailId: "",
+                    receiverAltContact: "",
+                    receiverKyc: "",
+                    receiverTaxReference: "",
+                    altAddressFlag: false,
+                    pickupAddressFlag: false,
+                    dropOffPincode: "395003",
+                    dropoffPickupOfficeId: "",
+                    senderMobileNo: "6355218926",
+                    receiverMobileNo: document.getElementById("receiverMobileNo").value.trim(),
+                    prepaymentCode: "",
+                    valueOfPrepayment: "",
+                    codrCod: "COD",
+                    valueForCodrCod: 400,
+                    insuranceType: "",
+                    valueOfInsurance: "",
+                    ack: false,
+                    registration: false,
+                    otpBasedDelivery: false,
+                    bulkReference: "123456"
+                };
+            }
+
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (!form.checkValidity()) {
+                    form.classList.add("was-validated");
+                    return;
+                }
+
+                var records = getRecords();
+                var newRecord = buildRecord(records);
+                records.push(newRecord);
+                saveRecords(records);
+
+                form.reset();
+                form.classList.remove("was-validated");
+                renderTable();
+            });
+
+            clearStorageBtn.addEventListener("click", function() {
+                if (!confirm("Clear all saved records?")) {
+                    return;
+                }
+                localStorage.removeItem(STORAGE_KEY);
+                renderTable();
+            });
+
+            renderTable();
+
+            // Export to Excel logic
+            document.getElementById("exportExcelBtn").addEventListener("click", function() {
+                var records = getRecords();
+                if (!records.length) {
+                    alert("No records to export.");
+                    return;
+                }
+
+                // Define the headers in the same order as the table
+                var headers = [
+                    "SERIAL NUMBER", "BARCODE NO", "PHYSICAL WEIGHT", "SHAPE OF ARTICLE", "LENGTHS", "BREADTH/DIAMETER", "HEIGHT", "PRIORITY FLAG", "DELIVERY INSTRUCTION", "INSTRUCTION RTS", "SENDER NAME", "SENDER COMPANY", "SENDER ADD LINE 1", "SENDER ADD LINE 2", "SENDER CITY", "SENDER STATE", "SENDER PINCODE", "SENDER EMAILID", "SENDER ALT CONTACT", "SENDER KYC", "SENDER TAX REFERENCE", "RECEIVER NAME", "RECEIVER COMPANY", "RECEIVER ADD LINE 1", "RECEIVER ADD LINE 2", "RECEIVER CITY", "RECEIVER STATE", "RECEIVER PINCODE", "RECEIVER EMAILID", "RECEIVER ALT CONTACT", "RECEIVER KYC", "RECEIVER TAX REFERENCE", "ALT ADDRESS FLAG", "PICKUP ADDRESS FLAG", "DROP OFF PINCODE", "DROPOFF/PICKUP OFFICE ID", "SENDER MOBILE NO", "RECEIVER MOBILE NO", "PREPAYMENT CODE", "VALUE OF PREPAYMENT", "CODR/COD", "VALUE FOR CODR/COD", "INSURANCE TYPE", "VALUE OF INSURANCE", "ACK", "REGISTRATION", "OTP BASED DELIVERY", "BULK REFERENCE"
+                ];
+
+                // Map records to match the header order
+                var data = records.map(function(record) {
+                    return [
+                        record.serialNumber,
+                        record.barcodeNo,
+                        record.physicalWeight,
+                        record.shapeOfArticle,
+                        record.lengths,
+                        record.breadthDiameter,
+                        record.height,
+                        record.priorityFlag ? "TRUE" : "FALSE",
+                        record.deliveryInstruction,
+                        record.instructionRts,
+                        record.senderName,
+                        record.senderCompany,
+                        record.senderAddLine1,
+                        record.senderAddLine2,
+                        record.senderCity,
+                        record.senderState,
+                        record.senderPincode,
+                        record.senderEmailId,
+                        record.senderAltContact,
+                        record.senderKyc,
+                        record.senderTaxReference,
+                        record.receiverName,
+                        record.receiverCompany,
+                        record.receiverAddLine1,
+                        record.receiverAddLine2,
+                        record.receiverCity,
+                        record.receiverState,
+                        record.receiverPincode,
+                        record.receiverEmailId,
+                        record.receiverAltContact,
+                        record.receiverKyc,
+                        record.receiverTaxReference,
+                        record.altAddressFlag ? "TRUE" : "FALSE",
+                        record.pickupAddressFlag ? "TRUE" : "FALSE",
+                        record.dropOffPincode,
+                        record.dropoffPickupOfficeId,
+                        record.senderMobileNo,
+                        record.receiverMobileNo,
+                        record.prepaymentCode,
+                        record.valueOfPrepayment,
+                        record.codrCod,
+                        record.valueForCodrCod,
+                        record.insuranceType,
+                        record.valueOfInsurance,
+                        record.ack ? "TRUE" : "FALSE",
+                        record.registration ? "TRUE" : "FALSE",
+                        record.otpBasedDelivery ? "TRUE" : "FALSE",
+                        record.bulkReference
+                    ];
+                });
+
+                // Prepend headers
+                data.unshift(headers);
+
+                var ws = XLSX.utils.aoa_to_sheet(data);
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Records");
+                XLSX.writeFile(wb, "file-data.xlsx");
+            });
+        })();
+    </script>
+</body>
+
+</html>
