@@ -282,11 +282,12 @@
                                 <th>REGISTRATION</th>
                                 <th>OTP BASED DELIVERY</th>
                                 <th>BULK REFERENCE</th>
+                                <th>ACTION</th>
                             </tr>
                         </thead>
                         <tbody id="recordsBody">
                             <tr>
-                                <td colspan="46"
+                                <td colspan="47"
                                     class="text-center text-secondary py-4">No records saved yet.</td>
                             </tr>
                         </tbody>
@@ -387,6 +388,16 @@
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
             }
 
+            function deleteRecord(serialNumber) {
+                var records = getRecords();
+                var updatedRecords = records.filter(function(record) {
+                    return String(record.serialNumber) !== String(serialNumber);
+                });
+
+                saveRecords(updatedRecords);
+                renderTable();
+            }
+
             function formatValue(value) {
                 if (typeof value === "boolean") {
                     return value ? "TRUE" : "FALSE";
@@ -399,7 +410,7 @@
                 recordCount.textContent = String(records.length);
 
                 if (!records.length) {
-                    recordsBody.innerHTML = '<tr><td colspan="46" class="text-center text-secondary py-4">No records saved yet.</td></tr>';
+                    recordsBody.innerHTML = '<tr><td colspan="47" class="text-center text-secondary py-4">No records saved yet.</td></tr>';
                     return;
                 }
 
@@ -420,6 +431,7 @@
                             "<td>" + formatValue(record.senderCompany) + "</td>" +
                             "<td>" + formatValue(record.senderAddLine1) + "</td>" +
                             "<td>" + formatValue(record.senderAddLine2) + "</td>" +
+                            "<td>" + formatValue(record.senderCity) + "</td>" +
                             "<td>" + formatValue(record.senderState) + "</td>" +
                             "<td>" + formatValue(record.senderPincode) + "</td>" +
                             "<td>" + formatValue(record.senderEmailId) + "</td>" +
@@ -453,6 +465,7 @@
                             "<td>" + formatValue(record.registration) + "</td>" +
                             "<td>" + formatValue(record.otpBasedDelivery) + "</td>" +
                             "<td>" + formatValue(record.bulkReference) + "</td>" +
+                            "<td><button type=\"button\" class=\"btn btn-sm btn-outline-danger delete-record-btn\" data-serial-number=\"" + formatValue(record.serialNumber) + "\">Delete</button></td>" +
                             "</tr>";
                     })
                     .join("");
@@ -573,6 +586,20 @@
                 }
                 localStorage.removeItem(STORAGE_KEY);
                 renderTable();
+            });
+
+            recordsBody.addEventListener("click", function(event) {
+                var deleteButton = event.target.closest(".delete-record-btn");
+                if (!deleteButton) {
+                    return;
+                }
+
+                var serialNumber = deleteButton.getAttribute("data-serial-number");
+                if (!confirm("Delete this record?")) {
+                    return;
+                }
+
+                deleteRecord(serialNumber);
             });
 
             allowDigitsOnly(receiverMobileNoInput, 10);
