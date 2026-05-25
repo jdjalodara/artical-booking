@@ -46,6 +46,13 @@
         .important-header {
             color: #dc3545 !important;
         }
+
+        .char-count {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-left: 0.25rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -59,12 +66,22 @@
                 <form id="articleForm"
                     class="row g-3"
                     novalidate>
+                    <div class="col-12">
+                        <div id="formInvalidAlert"
+                            class="alert alert-danger py-2 px-3 mb-0"
+                            role="alert">
+                            Please correct invalid fields to enable Save Record.
+                        </div>
+                    </div>
+
                     <div class="col-md-6">
                         <label for="receiverName"
-                            class="form-label">Receiver Name</label>
+                            class="form-label">Receiver Name <span id="receiverNameCount"
+                                class="char-count">(0)</span></label>
                         <input type="text"
                             class="form-control"
                             id="receiverName"
+                            maxlength="30"
                             required />
                         <div class="invalid-feedback">Receiver name is required.</div>
                     </div>
@@ -75,6 +92,9 @@
                         <input type="tel"
                             class="form-control"
                             id="receiverMobileNo"
+                            inputmode="numeric"
+                            minlength="10"
+                            maxlength="10"
                             pattern="^[0-9]{10}$"
                             required />
                         <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
@@ -82,40 +102,48 @@
 
                     <div class="col-md-6">
                         <label for="receiverAddLine1"
-                            class="form-label">Receiver Add Line 1</label>
+                            class="form-label">Receiver Add Line 1 <span id="receiverAddLine1Count"
+                                class="char-count">(0)</span></label>
                         <input type="text"
                             class="form-control"
                             id="receiverAddLine1"
+                            maxlength="30"
                             required />
                         <div class="invalid-feedback">Receiver address line 1 is required.</div>
                     </div>
 
                     <div class="col-md-6">
                         <label for="receiverAddLine2"
-                            class="form-label">Receiver Add Line 2</label>
+                            class="form-label">Receiver Add Line 2 <span id="receiverAddLine2Count"
+                                class="char-count">(0)</span></label>
                         <input type="text"
                             class="form-control"
                             id="receiverAddLine2"
+                            maxlength="30"
                             required />
                         <div class="invalid-feedback">Receiver address line 2 is required.</div>
                     </div>
 
                     <div class="col-md-4">
                         <label for="receiverCity"
-                            class="form-label">Receiver City</label>
+                            class="form-label">Receiver City <span id="receiverCityCount"
+                                class="char-count">(0)</span></label>
                         <input type="text"
                             class="form-control"
                             id="receiverCity"
+                            maxlength="30"
                             required />
                         <div class="invalid-feedback">Receiver city is required.</div>
                     </div>
 
                     <div class="col-md-4">
                         <label for="receiverState"
-                            class="form-label">Receiver State</label>
+                            class="form-label">Receiver State <span id="receiverStateCount"
+                                class="char-count">(0)</span></label>
                         <input type="text"
                             class="form-control"
                             id="receiverState"
+                            maxlength="30"
                             required />
                         <div class="invalid-feedback">Receiver state is required.</div>
                     </div>
@@ -126,6 +154,9 @@
                         <input type="text"
                             class="form-control"
                             id="receiverPincode"
+                            inputmode="numeric"
+                            minlength="6"
+                            maxlength="6"
                             pattern="^[0-9]{6}$"
                             required />
                         <div class="invalid-feedback">Enter a valid 6-digit pincode.</div>
@@ -133,6 +164,7 @@
 
                     <div class="col-12 d-flex gap-2 pt-2">
                         <button type="submit"
+                            id="saveRecordBtn"
                             class="btn btn-primary px-4">Save Record</button>
                         <button type="button"
                             id="clearStorageBtn"
@@ -230,6 +262,49 @@
             var recordsBody = document.getElementById("recordsBody");
             var recordCount = document.getElementById("recordCount");
             var clearStorageBtn = document.getElementById("clearStorageBtn");
+            var saveRecordBtn = document.getElementById("saveRecordBtn");
+            var formInvalidAlert = document.getElementById("formInvalidAlert");
+            var receiverMobileNoInput = document.getElementById("receiverMobileNo");
+            var receiverPincodeInput = document.getElementById("receiverPincode");
+
+            var counterFields = [{
+                inputId: "receiverName",
+                countId: "receiverNameCount"
+            },
+            {
+                inputId: "receiverAddLine1",
+                countId: "receiverAddLine1Count"
+            },
+            {
+                inputId: "receiverAddLine2",
+                countId: "receiverAddLine2Count"
+            },
+            {
+                inputId: "receiverCity",
+                countId: "receiverCityCount"
+            },
+            {
+                inputId: "receiverState",
+                countId: "receiverStateCount"
+            }
+            ];
+
+            function updateCharCount(inputEl, countEl) {
+                countEl.textContent = "(" + String(inputEl.value.length) + ")";
+            }
+
+            function allowDigitsOnly(inputEl, maxLength) {
+                inputEl.addEventListener("input", function() {
+                    var digits = inputEl.value.replace(/\D/g, "").slice(0, maxLength);
+                    inputEl.value = digits;
+                });
+            }
+
+            function updateFormValidityState() {
+                var isValid = form.checkValidity();
+                saveRecordBtn.disabled = !isValid;
+                formInvalidAlert.classList.toggle("d-none", isValid);
+            }
 
             function getRecords() {
                 try {
@@ -416,6 +491,15 @@
 
                 form.reset();
                 form.classList.remove("was-validated");
+
+                counterFields.forEach(function(field) {
+                    var inputEl = document.getElementById(field.inputId);
+                    var countEl = document.getElementById(field.countId);
+                    updateCharCount(inputEl, countEl);
+                });
+
+                updateFormValidityState();
+
                 renderTable();
             });
 
@@ -426,6 +510,25 @@
                 localStorage.removeItem(STORAGE_KEY);
                 renderTable();
             });
+
+            counterFields.forEach(function(field) {
+                var inputEl = document.getElementById(field.inputId);
+                var countEl = document.getElementById(field.countId);
+                updateCharCount(inputEl, countEl);
+                inputEl.addEventListener("input", function() {
+                    updateCharCount(inputEl, countEl);
+                    updateFormValidityState();
+                });
+            });
+
+            allowDigitsOnly(receiverMobileNoInput, 10);
+            allowDigitsOnly(receiverPincodeInput, 6);
+
+            receiverMobileNoInput.addEventListener("input", updateFormValidityState);
+            receiverPincodeInput.addEventListener("input", updateFormValidityState);
+            form.addEventListener("change", updateFormValidityState);
+
+            updateFormValidityState();
 
             renderTable();
 
